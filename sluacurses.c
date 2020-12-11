@@ -316,14 +316,14 @@ static int l_newwin(lua_State *L) {
 
 static int l_wborder(lua_State *L) {
     const unsigned long name = luaL_checknumber(L,-9);
-    const char left          = luaL_checknumber(L,-8);
-    const char right         = luaL_checknumber(L,-7);
-    const char top           = luaL_checknumber(L,-6);
-    const char bottom        = luaL_checknumber(L,-5);
-    const char top_left      = luaL_checknumber(L,-4);
-    const char top_right     = luaL_checknumber(L,-3);
-    const char bottom_left   = luaL_checknumber(L,-2);
-    const char bottom_right  = luaL_checknumber(L,-1);
+    const char left          = luaL_checkstring(L,-8);
+    const char right         = luaL_checkstring(L,-7);
+    const char top           = luaL_checkstring(L,-6);
+    const char bottom        = luaL_checkstring(L,-5);
+    const char top_left      = luaL_checkstring(L,-4);
+    const char top_right     = luaL_checkstring(L,-3);
+    const char bottom_left   = luaL_checkstring(L,-2);
+    const char bottom_right  = luaL_checkstring(L,-1);
     wborder(getWindow(name),left,right,top,bottom,top_left,top_right,bottom_left,bottom_right);
     return 0;
 }
