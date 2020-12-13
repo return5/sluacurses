@@ -66,9 +66,6 @@ Please see 'examples' directory for more examples.
 ## Compiling
 To compile the C library simply use the make file. 
 
-`./make`
-
-
 ## Requirements
 - Lua
 - C compiler (gcc is used in the make file)
