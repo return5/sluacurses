@@ -64,8 +64,8 @@ newwin returns the hashed name as its return data. The user just has to store th
 Please see 'examples' directory for more examples.
 
 ## Compiling
-To compile the C library simply use the make file.
-'./make'
+To compile the C library simply use the make file. 
+`./make`
 
 
 ## Requirements
