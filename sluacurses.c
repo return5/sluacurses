@@ -50,7 +50,7 @@ static void removeFromArray(const unsigned long name);
 static WINDOW *getWindow(const unsigned long name);
 static int l_newwin(lua_State *L);
 static int l_wborder(lua_State *L);
-static int l_wmvprintw(lua_State *L);
+static int l_mvwprintw(lua_State *L);
 static int l_wprintw(lua_State *L);
 static int l_printw(lua_State *L);
 static int l_refresh(__attribute__((unused)) lua_State *L);
@@ -65,7 +65,7 @@ static void reorderArray(const int index);
 static int l_getch(lua_State *L);
 static int l_mvgetch(lua_State *L);
 static int l_wgetch(lua_State *L);
-static int l_wmvwgetch(lua_State *L);
+static int l_mvwgetch(lua_State *L);
 static WINDOW_STRUCT **resizeWindowArray(void);
 static int findArrayIndex(const unsigned long name);
 static WINDOW_STRUCT *makeWindowStruct(const WIN_INFO *const win_info);
@@ -83,6 +83,7 @@ static int l_initscr(__attribute__((unused)) lua_State *L);
 static int l_delwin(lua_State *L);
 static int l_color_pair(lua_State *L);
 static int addColorValue(lua_State *L);
+static int l_init_color(lua_State *L);
 
 //-------------------------------- code -------------------------------------------------------
 
@@ -111,12 +112,12 @@ int luaopen_sluacurses(lua_State *L) {
     lua_register(L,"getch",l_getch); 
     lua_register(L,"mvgetch",l_mvgetch); 
     lua_register(L,"wgetch",l_wgetch); 
-    lua_register(L,"wmvwgetch",l_wmvwgetch); 
+    lua_register(L,"mvwgetch",l_mvwgetch); 
     lua_register(L,"wmove",l_wmove); 
     lua_register(L,"move",l_move); 
     lua_register(L,"newwin",l_newwin); 
     lua_register(L,"wborder",l_wborder); 
-    lua_register(L,"wmvprintw",l_wmvprintw); 
+    lua_register(L,"mvwprintw",l_mvwprintw); 
     lua_register(L,"wprintw",l_wprintw); 
     lua_register(L,"printw",l_printw); 
     lua_register(L,"refresh",l_refresh);
@@ -146,6 +147,7 @@ int luaopen_sluacurses(lua_State *L) {
     lua_register(L,"attron",l_attron);
     lua_register(L,"attroff",l_attroff);
     lua_register(L,"color_set",l_color_set);
+    lua_register(L,"init_color",l_init_color);
     return 0;
 }
 
@@ -208,9 +210,9 @@ static int l_delwin(lua_State *L) {
 }
 
 static int l_init_pair(lua_State *L) {
-    const int color      = luaL_checknumber(L,-3);
-    const int foreground = luaL_checknumber(L,-2);
-    const int background = luaL_checknumber(L,-1);
+    const int color      = luaL_checknumber(L,1);
+    const int foreground = luaL_checknumber(L,2);
+    const int background = luaL_checknumber(L,3);
     init_pair(color,foreground,background);
     return 0;
 }
@@ -316,14 +318,14 @@ static int l_newwin(lua_State *L) {
 
 static int l_wborder(lua_State *L) {
     const unsigned long name = luaL_checknumber(L,-9);
-    const char left          = luaL_checkstring(L,-8);
-    const char right         = luaL_checkstring(L,-7);
-    const char top           = luaL_checkstring(L,-6);
-    const char bottom        = luaL_checkstring(L,-5);
-    const char top_left      = luaL_checkstring(L,-4);
-    const char top_right     = luaL_checkstring(L,-3);
-    const char bottom_left   = luaL_checkstring(L,-2);
-    const char bottom_right  = luaL_checkstring(L,-1);
+    const char left          = luaL_checkstring(L,-8)[0];
+    const char right         = luaL_checkstring(L,-7)[0];
+    const char top           = luaL_checkstring(L,-6)[0];
+    const char bottom        = luaL_checkstring(L,-5)[0];
+    const char top_left      = luaL_checkstring(L,-4)[0];
+    const char top_right     = luaL_checkstring(L,-3)[0];
+    const char bottom_left   = luaL_checkstring(L,-2)[0];
+    const char bottom_right  = luaL_checkstring(L,-1)[0];
     wborder(getWindow(name),left,right,top,bottom,top_left,top_right,bottom_left,bottom_right);
     return 0;
 }
@@ -362,7 +364,7 @@ static int l_wprintw(lua_State *L) {
     return 0;
 }
 
-static int l_wmvprintw(lua_State *L) {
+static int l_mvwprintw(lua_State *L) {
     l_wmove(L);
     lua_remove(L,2);
     lua_remove(L,2);
@@ -423,11 +425,20 @@ static int l_wgetch(lua_State *L) {
     return 1;
 }
 
-static int l_wmvwgetch(lua_State *L) {
+static int l_mvwgetch(lua_State *L) {
     l_wmove(L);
     lua_remove(L,-1);
     lua_remove(L,-1);
     return l_wgetch(L);
+}
+
+static int l_init_color(lua_State *L) {
+    const int color = luaL_checknumber(L,1);
+    const int r     = luaL_checknumber(L,2);
+    const int g     = luaL_checknumber(L,3);
+    const int b     = luaL_checknumber(L,4);
+    init_color(color,r,g,b);
+    return 0;
 }
 
 static int l_color_pair(lua_State *L) {
