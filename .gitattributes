@@ -27,3 +27,15 @@
 *.exe   binary
 *.out   binary
 *.app   binary
+
+# Basic .gitattributes for a Lua repo.
+
+# Source files
+# ============
+*.lua       text
+
+# Luadoc output
+# =============
+*.html      text diff=html
+*.css       text diff=css
+
