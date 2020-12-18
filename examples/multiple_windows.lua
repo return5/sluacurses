@@ -13,9 +13,9 @@ refresh()   --refresh screen
 window_table = {}  --tabel to hold windows
 
 -- create a list of 3 windows stored in 'window_table'
-table.insert(window_table,newwin("window1",5,10,0,0))
-table.insert(window_table,newwin("window2",5,10,0,11))
-table.insert(window_table,newwin("window3",5,10,0,23))
+table.insert(window_table,newwin(5,10,0,0))
+table.insert(window_table,newwin(5,10,0,11))
+table.insert(window_table,newwin(5,10,0,23))
 
 --print to each window
 for i,window in ipairs(window_table) do

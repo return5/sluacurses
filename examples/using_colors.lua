@@ -13,7 +13,7 @@ refresh()     --refresh screen
 
 --create a new window and save its hashed name to 'w'
 --args: name,height,width,starting y, starting x
-local w = newwin("mywin",15,25,5,5)
+local w = newwin(15,25,5,5)
 local red = 1                          --store number for the color pair
 init_pair(red,COLOR_RED,COLOR_BLACK)   --create color pair. red foreground with black background
 
