@@ -45,9 +45,9 @@ static int l_keypad(lua_State *L);
 static int l_mvdelch(lua_State *L);
 static int l_delch(__attribute__((unused)) lua_State *L);
 static int l_clrtoeol(__attribute__ ((unused)) lua_State *L);
-static unsigned long makeWindow(const WIN_INFO *const win_info);
-static void removeFromArray(const unsigned long name);
-static WINDOW *getWindow(const unsigned long name);
+static int makeWindow(const WIN_INFO *const win_info);
+static void removeFromArray(const int index);
+static WINDOW *getWindow(const int index);
 static int l_newwin(lua_State *L);
 static int l_wborder(lua_State *L);
 static int l_mvwprintw(lua_State *L);
@@ -66,10 +66,7 @@ static int l_getch(lua_State *L);
 static int l_mvgetch(lua_State *L);
 static int l_wgetch(lua_State *L);
 static int l_mvwgetch(lua_State *L);
-static WINDOW_STRUCT **resizeWindowArray(void);
-static int findArrayIndex(const unsigned long name);
-static WINDOW_STRUCT *makeWindowStruct(const WIN_INFO *const win_info);
-static unsigned long hashName(const char *name);
+static WINDOW **resizeWindowArray(void);
 static WINDOW_ARRAY *createWindowArray(void);
 static void addToWindowArray(const WIN_INFO *const win_info);
 static int l_curs_set(lua_State *L);
@@ -203,9 +200,9 @@ static int l_mvdelch(lua_State *L) {
 }
 
 static int l_delwin(lua_State *L) {
-    const unsigned long name = luaL_checknumber(L,-1);
-    delwin(getWindow(name));
-    removeFromArray(name);
+    const int index = luaL_checknumber(L,-1);
+    delwin(getWindow(index));
+    removeFromArray(index);
     return 0;
 }
 
@@ -225,32 +222,16 @@ static int l_curs_set(lua_State *L) {
 
 static WINDOW_ARRAY *createWindowArray(void) {
     WINDOW_ARRAY *tmp = malloc(sizeof(WINDOW_ARRAY));
-    tmp->index        = 0;
+    tmp->index        = -1;
     tmp->max_length   = 5;
-    tmp->windows      = malloc(sizeof(WINDOW_STRUCT) * tmp->max_length);
+    tmp->windows      = malloc(sizeof(WINDOW) * tmp->max_length);
     return tmp;
 }
 
-static unsigned long hashName(const char *name) {
-    unsigned long hash = 5381;
-    int c;
-    while((c = *name++)) { 
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-    }
-    return hash;
-}
-
-static WINDOW_STRUCT *makeWindowStruct(const WIN_INFO *const win_info) {
-    WINDOW_STRUCT *tmp = malloc(sizeof(WINDOW_STRUCT));
-    tmp->hash_name     = hashName(win_info->name);
-    tmp->window        = newwin(win_info->h,win_info->w,win_info->y,win_info->x);
-    return tmp;
-}
-
-static WINDOW_STRUCT **resizeWindowArray(void) {
-    WINDOW_STRUCT **tmp = realloc(window_array->windows,sizeof(WINDOW_STRUCT) * window_array->max_length);
+static WINDOW **resizeWindowArray(void) {
+    WINDOW **tmp = realloc(window_array->windows,sizeof(WINDOW) * window_array->max_length);
     if (tmp == NULL) {
-        tmp = realloc(window_array->windows,sizeof(WINDOW_STRUCT) * window_array->max_length);
+        tmp = realloc(window_array->windows,sizeof(WINDOW) * window_array->max_length);
     }
     return tmp;
 }
@@ -260,16 +241,8 @@ static void addToWindowArray(const WIN_INFO *const win_info) {
         window_array->max_length += 5;
         window_array->windows     = resizeWindowArray();
     }
-    window_array->windows[window_array->index++] = makeWindowStruct(win_info);
-}
+    window_array->windows[++(window_array->index)] = newwin(win_info->h,win_info->w,win_info->y,win_info->x);
 
-static int findArrayIndex(const unsigned long name) {
-    for(int i = 0; i < window_array->index; i++) {
-        if(window_array->windows[i]->hash_name == name) {
-            return i;
-        }
-    }
-    return -1;
 }
 
 static void reorderArray(const int index) {
@@ -279,45 +252,42 @@ static void reorderArray(const int index) {
     }
 }
 
-void removeFromArray(const unsigned long name) {
-    const int index = findArrayIndex(name);
+void removeFromArray(const int index) {
     if(index >= 0) {
-        WINDOW_STRUCT *tmp = window_array->windows[index];
+        WINDOW *tmp = window_array->windows[index];
         reorderArray(index);
         free(tmp);
     }
 }
 
-WINDOW *getWindow(const unsigned long name) {
-    const int index = findArrayIndex(name);
-    if (index >= 0) {
-        return window_array->windows[index]->window;
+WINDOW *getWindow(const int index) {
+    if (index >= 0 && window_array->windows[index] != NULL) {
+        return window_array->windows[index];
     }
     return NULL;
 }
 
-unsigned long makeWindow(const WIN_INFO *const win_info) {
+int makeWindow(const WIN_INFO *const win_info) {
     if(window_array == NULL) {
         window_array = createWindowArray(); 
     }
     addToWindowArray(win_info);
-    return window_array->windows[window_array->index-1]->hash_name;
+    return window_array->index;
 }
 
 static int l_newwin(lua_State *L) {
-    const char *const name   = luaL_checkstring(L,-5);
-    const int h              = luaL_checknumber(L,-4);
-    const int w              = luaL_checknumber(L,-3);
-    const int y              = luaL_checknumber(L,-2);
-    const int x              = luaL_checknumber(L,-1);
-    WIN_INFO tmp             = {h,w,y,x,(char *)name};
-    const unsigned long hash = makeWindow(&tmp);
-    lua_pushnumber(L,hash);
+    const int h     = luaL_checknumber(L,-4);
+    const int w     = luaL_checknumber(L,-3);
+    const int y     = luaL_checknumber(L,-2);
+    const int x     = luaL_checknumber(L,-1);
+    WIN_INFO tmp    = {h,w,y,x};
+    const int index = makeWindow(&tmp);
+    lua_pushnumber(L,index);
     return 1;
 }
 
 static int l_wborder(lua_State *L) {
-    const unsigned long name = luaL_checknumber(L,-9);
+    const int index          = luaL_checknumber(L,-9);
     const char left          = luaL_checkstring(L,-8)[0];
     const char right         = luaL_checkstring(L,-7)[0];
     const char top           = luaL_checkstring(L,-6)[0];
@@ -326,19 +296,19 @@ static int l_wborder(lua_State *L) {
     const char top_right     = luaL_checkstring(L,-3)[0];
     const char bottom_left   = luaL_checkstring(L,-2)[0];
     const char bottom_right  = luaL_checkstring(L,-1)[0];
-    wborder(getWindow(name),left,right,top,bottom,top_left,top_right,bottom_left,bottom_right);
+    wborder(getWindow(index),left,right,top,bottom,top_left,top_right,bottom_left,bottom_right);
     return 0;
 }
 
 static int l_wrefresh(lua_State *L) {
-    const unsigned long name = luaL_checknumber(L,-1);
-    wrefresh(getWindow(name));
+    const int index = luaL_checknumber(L,-1);
+    wrefresh(getWindow(index));
     return 0;
 }
 
 static int l_wclear(lua_State *L) {
-    const unsigned long name = luaL_checknumber(L,-1);
-    wclear(getWindow(name));
+    const int index = luaL_checknumber(L,-1);
+    wclear(getWindow(index));
     return 0;
 }
 
@@ -358,9 +328,9 @@ static int l_printw(lua_State *L) {
 }
 
 static int l_wprintw(lua_State *L) {
-    const unsigned long name = luaL_checknumber(L,1);
-    const char *const str    = luaL_checkstring(L,2);
-    wprintw(getWindow(name),str);
+    const int index       = luaL_checknumber(L,1);
+    const char *const str = luaL_checkstring(L,2);
+    wprintw(getWindow(index),str);
     return 0;
 }
 
@@ -379,9 +349,9 @@ static int l_mvprintw(lua_State *L) {
 }
 
 static int l_wgetyx(lua_State *L) {
-    const unsigned long name = luaL_checknumber(L,-1);
+    const int index = luaL_checknumber(L,-1);
     int x,y;
-    getyx(getWindow(name),y,x);
+    getyx(getWindow(index),y,x);
     lua_pushnumber(L,y);
     lua_pushnumber(L,x);
     return 2;
@@ -396,10 +366,10 @@ static int l_getyx(lua_State *L) {
 }
 
 static int l_wmove(lua_State *L) {
-    const unsigned long name = luaL_checknumber(L,1);
-    const int y              = luaL_checknumber(L,2);
-    const int x              = luaL_checknumber(L,3);
-    wmove(getWindow(name),y,x);
+    const int index = luaL_checknumber(L,1);
+    const int y     = luaL_checknumber(L,2);
+    const int x     = luaL_checknumber(L,3);
+    wmove(getWindow(index),y,x);
     return 0;
 }
 static int l_move(lua_State *L) {
@@ -420,8 +390,8 @@ static int l_mvgetch(lua_State *L) {
 }
 
 static int l_wgetch(lua_State *L) {
-    const unsigned long name = luaL_checknumber(L,-1);
-    lua_pushfstring(L,"%c",wgetch((getWindow(name))));
+    const int index = luaL_checknumber(L,-1);
+    lua_pushfstring(L,"%c",wgetch((getWindow(index))));
     return 1;
 }
 
@@ -448,23 +418,23 @@ static int l_color_pair(lua_State *L) {
 }
 
 static int l_wattron(lua_State *L) {
-    const unsigned long name = luaL_checknumber(L,1);
-    const int           attr = luaL_checknumber(L,2);
-    wattron(getWindow(name),attr);
+    const int index = luaL_checknumber(L,1);
+    const int attr  = luaL_checknumber(L,2);
+    wattron(getWindow(index),attr);
     return 0;
 }
 
 static int l_wattroff(lua_State *L) {
-    const unsigned long name = luaL_checknumber(L,1);
-    const int           attr = luaL_checknumber(L,2);
-    wattroff(getWindow(name),attr);
+    const int index = luaL_checknumber(L,1);
+    const int attr  = luaL_checknumber(L,2);
+    wattroff(getWindow(index),attr);
     return 0;
 }
 
 static int l_wcolor_set(lua_State *L) {
-    const unsigned long name = luaL_checknumber(L,1);
-    const int           attr = luaL_checknumber(L,2);
-    wcolor_set(getWindow(name),attr,NULL);
+    const int index  = luaL_checknumber(L,1);
+    const int attr   = luaL_checknumber(L,2);
+    wcolor_set(getWindow(index),attr,NULL);
     return 0;
 }
 
