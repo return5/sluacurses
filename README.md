@@ -46,6 +46,8 @@ This is mostly just for me to play around with. I don't expect any serious usage
 - attron()
 - attroff()
 - color_set()
+- getstr()
+- mvwgetstr()
 
 ## Compiling
 To compile the C library simply use the make file. 
