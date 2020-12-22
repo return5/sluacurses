@@ -81,6 +81,8 @@ static int l_delwin(lua_State *L);
 static int l_color_pair(lua_State *L);
 static int addColorValue(lua_State *L);
 static int l_init_color(lua_State *L);
+static int l_getstr(lua_State *L);
+static int l_mvwgetstr(lua_State *L);
 
 //-------------------------------- code -------------------------------------------------------
 
@@ -145,6 +147,8 @@ int luaopen_sluacurses(lua_State *L) {
     lua_register(L,"attroff",l_attroff);
     lua_register(L,"color_set",l_color_set);
     lua_register(L,"init_color",l_init_color);
+    lua_register(L,"getstr",l_getstr);
+    lua_register(L,"mvwgetstr",l_mvwgetstr);
     return 0;
 }
 
@@ -378,6 +382,25 @@ static int l_move(lua_State *L) {
     move(y,x);
     return 0;
 }
+
+
+static int l_mvwgetstr(lua_State *L) {
+    char *str     = malloc(sizeof(char) * 100);
+    const int win = luaL_checknumber(L,1);
+    const int y   = luaL_checknumber(L,2);
+    const int x   = luaL_checknumber(L,3);
+    mvwgetstr(getWindow(win),y,x,str);
+    lua_pushstring(L,str);
+    return 1;
+}
+
+static int l_getstr(lua_State *L) {
+    char *str = malloc(sizeof(char) * 100);
+    getstr(str);
+    lua_pushstring(L,str);
+    return 1;
+}
+
 
 static int l_getch(lua_State *L) {
     lua_pushfstring(L,"%c",getch());
