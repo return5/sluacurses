@@ -3,8 +3,7 @@ Simple Lua Ncurses wrapper
 ## Introduction
 This is my simple wrapper for using ncurses with lua.  
 I attempt to keep the function calls in lua as close to the corresponding calls in C as i can.  
-The fetaures added are usually on an as needed basis, so it is currently far from a complete implementation, and probably never will be.  
-This is mostly just for me to play around with. I don't expect any serious usage of this stuff.  
+The features added are usually on an as needed basis, so it is currently far from a complete implementation, and probably never will be. 
 
 ## Functions Implemented
 - getch() 

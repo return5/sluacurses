@@ -1,6 +1,6 @@
 //-------------------------------- description ------------------------------------------------
 
-// File contains structs which are used to hold the array of windows, and to hold attributes of a  new window
+// File contains structs which are used to hold the array of windows, and to hold attributes of a new window
     
 //-------------------------------- include gurads ---------------------------------------------
 #ifndef WINDOWARRAY_H
@@ -21,7 +21,7 @@ typedef struct WINDOW_ARRAY {
 }WINDOW_ARRAY;
 
 //struct holds info for makign a new window
-//contains height, width, starting y, starting x, and name of window.
+//contains height, width, starting y, starting x.
 typedef struct WIN_INFO {
     int h,w,y,x;
 }WIN_INFO;

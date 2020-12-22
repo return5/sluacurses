@@ -265,7 +265,7 @@ void removeFromArray(const int index) {
 }
 
 WINDOW *getWindow(const int index) {
-    if (index >= 0 && window_array->windows[index] != NULL) {
+    if (index >= 0 && index <= window_array->index) {
         return window_array->windows[index];
     }
     return NULL;
