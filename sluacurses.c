@@ -193,7 +193,7 @@ static int l_delch(__attribute__((unused)) lua_State *L) {
 }
 
 static int l_keypad(lua_State *L) {
-    const int b = lua_toboolean(L,2);
+    const int b = lua_checknumber(L,2);
     keypad(stdscr,b);
     return 0;
 }
